@@ -1,0 +1,16 @@
+services:
+  - type: worker
+    name: orom-textile-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    autoDeploy: true
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_ID
+        sync: false
+      - key: ADMIN_USERNAME
+        value: "Sherzod_6144"
+      - key: ADMIN_PHONE
+        value: "+998 99 996 61 44"

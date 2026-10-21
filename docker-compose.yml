@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  orom_bot:
+    build: .
+    container_name: orom_textile_bot
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./orom_textile.db:/app/orom_textile.db
+      - ./logs:/app/logs
