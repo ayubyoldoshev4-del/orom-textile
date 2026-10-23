@@ -11,6 +11,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 from aiogram.exceptions import TelegramNetworkError, TelegramAPIError
+from aiohttp import web
 
 from config import BOT_TOKEN, ADMIN_IDS
 from database import init_db
@@ -81,6 +82,40 @@ async def notify_admins_on_startup(bot: Bot):
             pass
 
 
+async def handle_ping(request):
+    """Render.com uchun HTTP health-check javobi."""
+    return web.Response(
+        text="OROM TEXTILE Telegram Bot is running 24/7!",
+        content_type="text/plain",
+        status=200
+    )
+
+
+async def start_dummy_web_server():
+    """Render.com Web Service rejimida portni tinglash uchun yengil HTTP server."""
+    port_str = os.getenv("PORT")
+    if not port_str:
+        return None
+    try:
+        port = int(port_str)
+        app = web.Application()
+        app.router.add_get("/", handle_ping)
+        app.router.add_get("/health", handle_ping)
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, "0.0.0.0", port)
+        await site.start()
+        logging.getLogger("OROM_TEXTILE").info(
+            f"Render Web Service uchun HTTP server {port}-portda muvaffaqiyatli ishga tushdi."
+        )
+        return runner
+    except Exception as e:
+        logging.getLogger("OROM_TEXTILE").warning(
+            f"HTTP serverni ishga tushirishda ogohlantirish: {e}"
+        )
+        return None
+
+
 async def run_bot():
     """Botning asosiy ishchi asinxron sikli."""
     setup_logging()
@@ -120,6 +155,9 @@ async def run_bot():
     # Adminlarga xabar berish
     await notify_admins_on_startup(bot)
 
+    # Render.com yoki bulutli serverlar uchun Web Port tinglovchisi
+    web_runner = await start_dummy_web_server()
+
     # 24/7 Uzluksiz ishlash va avtomatik qayta ulanish mexanizmi (Supervisor)
     reconnect_delay = 3
     logger.info("OROM TEXTILE boti 24/7 rejimida ish boshladi...")
@@ -150,6 +188,11 @@ async def run_bot():
             reconnect_delay = 3
 
     # Yopilish jarayoni
+    if web_runner:
+        try:
+            await web_runner.cleanup()
+        except Exception:
+            pass
     try:
         await bot.session.close()
     except Exception:
