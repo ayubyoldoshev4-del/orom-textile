@@ -10,7 +10,7 @@ load_dotenv(BASE_DIR / ".env")
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 
 # Adminlar ID ro'yxati (vergul bilan ajratilgan)
-_admin_ids_raw = os.getenv("ADMIN_IDS", "").strip()
+_admin_ids_raw = (os.getenv("ADMIN_IDS") or os.getenv("ADMIN_ID") or "").strip()
 ADMIN_IDS: list[int] = []
 if _admin_ids_raw:
     for item in _admin_ids_raw.split(","):
